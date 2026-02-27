@@ -42,16 +42,6 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 		return ctx.Reply("Иди в группу, тут тебе не личный кабинет психотерапевта.")
 	}
 
-	// Проверка прав администратора
-	member, err := ctx.Bot().ChatMemberOf(tgChat, sender)
-	if err != nil {
-		return fmt.Errorf("can't get chat member: %w", err)
-	}
-
-	if member.Role != telebot.Creator && member.Role != telebot.Administrator {
-		return ctx.Reply("Пососи, потом проси.")
-	}
-
 	// Разбираем команду: /settings [key [value]]
 	text := ctx.Message().Text
 	parts := strings.Fields(text)
