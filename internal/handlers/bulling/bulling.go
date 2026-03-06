@@ -11,9 +11,17 @@ import (
 
 	"github.com/reijo1337/ToxicBot/internal/chatsettings"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
+	"github.com/reijo1337/ToxicBot/internal/message"
 	"github.com/reijo1337/ToxicBot/pkg/pointer"
 	"gopkg.in/telebot.v3"
 )
+
+const historyBufferSize = 50
+
+type chatMessage struct {
+	Author string
+	Text   string
+}
 
 type settingsProvider interface {
 	GetForChat(ctx context.Context, chatID int64) (*chatsettings.Settings, error)
@@ -29,6 +37,8 @@ type Handler struct {
 	cooldown         map[string]time.Time
 	muCount          sync.Mutex
 	muCooldown       sync.Mutex
+	history          map[int64][]chatMessage
+	muHistory        sync.Mutex
 }
 
 func New(
@@ -44,6 +54,7 @@ func New(
 		settingsProvider: settingsProvider,
 		msgCount:         make(map[string]*list.List),
 		cooldown:         make(map[string]time.Time),
+		history:          make(map[int64][]chatMessage),
 		r:                rand.New(rand.NewSource(time.Now().UnixNano())),
 	}, nil
 }
@@ -59,6 +70,13 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 	if chat == nil || user == nil {
 		return nil
 	}
+
+	author := user.FirstName
+	if user.Username != "" {
+		author = user.Username
+	}
+
+	b.addToHistory(chat.ID, author, ctx.Message().Text)
 
 	settings, err := b.settingsProvider.GetForChat(b.ctx, chat.ID)
 	if err != nil {
@@ -85,7 +103,8 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 	// КД на булинг
 	b.setCooldown(key, settings.Cooldown)
 
-	text := b.generator.GetMessageText(ctx.Message().Text, settings.AIChance)
+	history := b.getHistory(chat.ID)
+	text := b.generator.GetMessageTextWithHistory(history, author, settings.AIChance)
 
 	go b.statIncer.Inc(
 		b.ctx,
@@ -101,6 +120,30 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 	time.Sleep(time.Duration((float64(b.r.Intn(3)) + b.r.Float64()) * 1_000_000_000))
 
 	return ctx.Reply(text.Message)
+}
+
+func (b *Handler) addToHistory(chatID int64, author, text string) {
+	b.muHistory.Lock()
+	defer b.muHistory.Unlock()
+
+	buf := b.history[chatID]
+	buf = append(buf, chatMessage{Author: author, Text: text})
+	if len(buf) > historyBufferSize {
+		buf = buf[len(buf)-historyBufferSize:]
+	}
+	b.history[chatID] = buf
+}
+
+func (b *Handler) getHistory(chatID int64) []message.HistoryMessage {
+	b.muHistory.Lock()
+	defer b.muHistory.Unlock()
+
+	buf := b.history[chatID]
+	out := make([]message.HistoryMessage, len(buf))
+	for i, m := range buf {
+		out[i] = message.HistoryMessage{Author: m.Author, Text: m.Text}
+	}
+	return out
 }
 
 func (b *Handler) isCooldown(key string) bool {
