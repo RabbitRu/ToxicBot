@@ -73,7 +73,7 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 
 	author := user.FirstName
 	if user.Username != "" {
-		author = user.Username
+		author = "@" + user.Username
 	}
 
 	b.addToHistory(chat.ID, author, ctx.Message().Text)
