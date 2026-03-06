@@ -143,7 +143,11 @@ func (g *Generator) GetMessageText(replyTo string, aiChance float32) GenerationR
 	}
 }
 
-func (g *Generator) GetMessageTextWithHistory(history []HistoryMessage, replyTo string, aiChance float32) GenerationResult {
+func (g *Generator) GetMessageTextWithHistory(
+	history []HistoryMessage,
+	replyTo HistoryMessage,
+	aiChance float32,
+) GenerationResult {
 	text, err := g.generateAiWithHistory(history, replyTo, aiChance)
 	if err == nil {
 		return GenerationResult{
@@ -167,8 +171,16 @@ func (g *Generator) GetMessageTextWithHistory(history []HistoryMessage, replyTo 
 	}
 }
 
-func (g *Generator) generateAiWithHistory(history []HistoryMessage, replyTo string, aiChance float32) (string, error) {
+func (g *Generator) generateAiWithHistory(
+	history []HistoryMessage,
+	replyTo HistoryMessage,
+	aiChance float32,
+) (string, error) {
 	if g.r.Float32() >= aiChance {
+		return "", errGenerationUnavailable
+	}
+
+	if !g.meaningfullFilter.IsMeaningfulPhrase(replyTo.Text) {
 		return "", errGenerationUnavailable
 	}
 
@@ -183,7 +195,8 @@ func (g *Generator) generateAiWithHistory(history []HistoryMessage, replyTo stri
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	systemPrompt := g.systemPrompt + "\nТы отвечаешь пользователю " + replyTo + "."
+	systemPrompt := g.systemPrompt + "\nТы отвечаешь пользователю " + replyTo.Author + "."
+	systemPrompt += "\nИстория чата:\n" + historyText.String()
 
 	return g.ai.Chat(
 		context.Background(),
@@ -193,7 +206,7 @@ func (g *Generator) generateAiWithHistory(history []HistoryMessage, replyTo stri
 		},
 		deepseek.ChatMessage{
 			Role:    deepseek.RoleUser,
-			Content: historyText.String(),
+			Content: replyTo.Text,
 		},
 	)
 }

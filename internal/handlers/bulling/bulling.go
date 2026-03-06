@@ -104,7 +104,11 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 	b.setCooldown(key, settings.Cooldown)
 
 	history := b.getHistory(chat.ID)
-	text := b.generator.GetMessageTextWithHistory(history, author, settings.AIChance)
+	text := b.generator.GetMessageTextWithHistory(
+		history,
+		message.HistoryMessage{Author: author, Text: ctx.Message().Text},
+		settings.AIChance,
+	)
 
 	go b.statIncer.Inc(
 		b.ctx,
