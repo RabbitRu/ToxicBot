@@ -10,6 +10,7 @@ import (
 
 type messageGenerator interface {
 	GetMessageText(replyTo string, aiChance float32) message.GenerationResult
+	GetMessageTextWithHistory(history []message.HistoryMessage, replyTo string, aiChance float32) message.GenerationResult
 }
 
 type statIncer interface {
