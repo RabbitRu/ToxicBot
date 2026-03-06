@@ -16,7 +16,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const historyBufferSize = 50
+const historyBufferSize = 20
 
 type chatMessage struct {
 	Author string
