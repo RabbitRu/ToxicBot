@@ -21,4 +21,4 @@ jobs:
           key: ${{ secrets.SSH_MAMA_KEY }}
           inventory: |
             [vscale_host]
-            vscale ansible_host=194.67.205.50 ansible_user=root
+            vscale ansible_host=95.81.76.70 ansible_user=root
