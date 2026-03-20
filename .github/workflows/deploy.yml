@@ -21,7 +21,7 @@ jobs:
         key: ${{secrets.SSH_MAMA_KEY}}
         inventory: |
           [vscale_host]
-          vscale ansible_host=95.81.76.70 ansible_user=root
+          vscale ansible_host=${{ vars.VDS_HOST }} ansible_user=root
         options: |
           --extra-vars "TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }} 
           IGOR_ID=${{ secrets.IGOR_ID }}
