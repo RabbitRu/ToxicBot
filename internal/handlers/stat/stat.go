@@ -24,6 +24,7 @@ var (
 		{stats.OnUserLeftOperationType, "🧎‍♂️"},
 		{stats.PersonalOperationType, "🤱"},
 		{stats.TaggerOperationType, "🌀"},
+		{stats.OnPhotoOperationType, "📷"},
 	}
 
 	getTypeEmoji = []struct {

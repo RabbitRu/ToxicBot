@@ -16,6 +16,7 @@ const (
 	OnUserLeftOperationType
 	PersonalOperationType
 	TaggerOperationType
+	OnPhotoOperationType
 )
 
 type Response struct {

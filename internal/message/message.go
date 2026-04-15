@@ -147,8 +147,9 @@ func (g *Generator) GetMessageTextWithHistory(
 	history []HistoryMessage,
 	replyTo HistoryMessage,
 	aiChance float32,
+	forceAI bool,
 ) GenerationResult {
-	text, err := g.generateAiWithHistory(history, replyTo, aiChance)
+	text, err := g.generateAiWithHistory(history, replyTo, aiChance, forceAI)
 	if err == nil {
 		return GenerationResult{
 			Message:  text,
@@ -175,13 +176,16 @@ func (g *Generator) generateAiWithHistory(
 	history []HistoryMessage,
 	replyTo HistoryMessage,
 	aiChance float32,
+	forceAI bool,
 ) (string, error) {
-	if g.r.Float32() >= aiChance {
-		return "", errGenerationUnavailable
-	}
+	if !forceAI {
+		if g.r.Float32() >= aiChance {
+			return "", errGenerationUnavailable
+		}
 
-	if !g.meaningfullFilter.IsMeaningfulPhrase(replyTo.Text) {
-		return "", errGenerationUnavailable
+		if !g.meaningfullFilter.IsMeaningfulPhrase(replyTo.Text) {
+			return "", errGenerationUnavailable
+		}
 	}
 
 	systemPromptBuilder := strings.Builder{}

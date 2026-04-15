@@ -18,6 +18,7 @@ type chatSettingsRow struct {
 	StickerReactChance *float64 `db:"sticker_react_chance"`
 	VoiceReactChance   *float64 `db:"voice_react_chance"`
 	AIChance           *float64 `db:"ai_chance"`
+	PhotoReactChance   *float64 `db:"photo_react_chance"`
 }
 
 type ChatSettingsStorage struct {
@@ -38,6 +39,7 @@ select
 	,sticker_react_chance
 	,voice_react_chance
 	,ai_chance
+	,photo_react_chance
 from chat_settings
 where chat_id = ?`
 
@@ -69,6 +71,7 @@ insert into chat_settings (
 	,sticker_react_chance
 	,voice_react_chance
 	,ai_chance
+	,photo_react_chance
 	,updated_at
 ) values (
 	:chat_id
@@ -78,6 +81,7 @@ insert into chat_settings (
 	,:sticker_react_chance
 	,:voice_react_chance
 	,:ai_chance
+	,:photo_react_chance
 	,current_timestamp
 ) on conflict(chat_id) do update set
 	threshold_count      = coalesce(:threshold_count,      threshold_count)
@@ -86,6 +90,7 @@ insert into chat_settings (
 	,sticker_react_chance = coalesce(:sticker_react_chance, sticker_react_chance)
 	,voice_react_chance   = coalesce(:voice_react_chance,   voice_react_chance)
 	,ai_chance            = coalesce(:ai_chance,            ai_chance)
+	,photo_react_chance   = coalesce(:photo_react_chance,   photo_react_chance)
 	,updated_at          = current_timestamp`
 
 	_, err := s.connGetter.Get(ctx).NamedExecContext(ctx, query, row)
@@ -140,6 +145,11 @@ func rowToDomain(row chatSettingsRow) *chat.ChatSettings {
 		out.AIChance = &v
 	}
 
+	if row.PhotoReactChance != nil {
+		v := float32(*row.PhotoReactChance)
+		out.PhotoReactChance = &v
+	}
+
 	return out
 }
 
@@ -174,6 +184,11 @@ func domainToRow(chatID int64, s chat.ChatSettings) chatSettingsRow {
 	if s.AIChance != nil {
 		v := float64(*s.AIChance)
 		row.AIChance = &v
+	}
+
+	if s.PhotoReactChance != nil {
+		v := float64(*s.PhotoReactChance)
+		row.PhotoReactChance = &v
 	}
 
 	return row

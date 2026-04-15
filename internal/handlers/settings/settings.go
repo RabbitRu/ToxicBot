@@ -75,7 +75,8 @@ func (h *Handler) handleShow(ctx telebot.Context, chatID int64) error {
 			"• cooldown: %s (по умолчанию: %s)\n"+
 			"• sticker_chance: %.2f (по умолчанию: %.2f)\n"+
 			"• voice_chance: %.2f (по умолчанию: %.2f)\n"+
-			"• ai_chance: %.2f (по умолчанию: %.2f)\n\n"+
+			"• ai_chance: %.2f (по умолчанию: %.2f)\n"+
+			"• photo_chance: %.2f (по умолчанию: %.2f)\n\n"+
 			"Изменить: /settings <ключ> <значение>\n"+
 			"Сбросить: /settings reset",
 		s.ThresholdCount, h.defaults.ThresholdCount,
@@ -84,6 +85,7 @@ func (h *Handler) handleShow(ctx telebot.Context, chatID int64) error {
 		s.StickerReactChance, h.defaults.StickerReactChance,
 		s.VoiceReactChance, h.defaults.VoiceReactChance,
 		s.AIChance, h.defaults.AIChance,
+		s.PhotoReactChance, h.defaults.PhotoReactChance,
 	)
 
 	return ctx.Reply(msg)
@@ -127,30 +129,31 @@ func (h *Handler) handleSet(ctx telebot.Context, chatID int64, key, rawValue str
 		}
 
 	case "sticker_chance":
-		v, err := strconv.ParseFloat(rawValue, 32)
-		if err != nil || v < 0 || v > 1 {
-			errMsg = "Вероятность — это число от 0 до 1, гений. Не \"" + rawValue + "\". Попробуй ещё раз, может в этот раз получится"
-		} else {
-			f := float32(v)
+		if f, ok := parseChance(rawValue); ok {
 			partial.StickerReactChance = &f
+		} else {
+			errMsg = "Вероятность — это число от 0 до 1, гений. Не \"" + rawValue + "\". Попробуй ещё раз, может в этот раз получится"
 		}
 
 	case "voice_chance":
-		v, err := strconv.ParseFloat(rawValue, 32)
-		if err != nil || v < 0 || v > 1 {
-			errMsg = "Число от 0.0 до 1.0, обезьяна. \"" + rawValue + "\" — это не число, это позор"
-		} else {
-			f := float32(v)
+		if f, ok := parseChance(rawValue); ok {
 			partial.VoiceReactChance = &f
+		} else {
+			errMsg = "Число от 0.0 до 1.0, обезьяна. \"" + rawValue + "\" — это не число, это позор"
 		}
 
 	case "ai_chance":
-		v, err := strconv.ParseFloat(rawValue, 32)
-		if err != nil || v < 0 || v > 1 {
-			errMsg = "Даже ИИ за тебя стыдно. Введи число от 0.0 до 1.0, а не \"" + rawValue + "\""
-		} else {
-			f := float32(v)
+		if f, ok := parseChance(rawValue); ok {
 			partial.AIChance = &f
+		} else {
+			errMsg = "Даже ИИ за тебя стыдно. Введи число от 0.0 до 1.0, а не \"" + rawValue + "\""
+		}
+
+	case "photo_chance":
+		if f, ok := parseChance(rawValue); ok {
+			partial.PhotoReactChance = &f
+		} else {
+			errMsg = "Фоточки тоже считать не умеешь? Число от 0.0 до 1.0, давай заново"
 		}
 
 	default:
@@ -172,6 +175,14 @@ func (h *Handler) handleSet(ctx telebot.Context, chatID int64, key, rawValue str
 	)
 }
 
+func parseChance(raw string) (float32, bool) {
+	v, err := strconv.ParseFloat(raw, 32)
+	if err != nil || v < 0 || v > 1 {
+		return 0, false
+	}
+	return float32(v), true
+}
+
 func (h *Handler) usage() string {
 	return "Использование:\n" +
 		"/settings — показать настройки\n" +
@@ -183,5 +194,6 @@ func (h *Handler) usage() string {
 		"• cooldown (длительность: 30m, 1h)\n" +
 		"• sticker_chance (0.0 – 1.0)\n" +
 		"• voice_chance (0.0 – 1.0)\n" +
-		"• ai_chance (0.0 – 1.0)"
+		"• ai_chance (0.0 – 1.0)\n" +
+		"• photo_chance (0.0 – 1.0)"
 }

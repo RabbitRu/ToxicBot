@@ -14,9 +14,15 @@ type messageGenerator interface {
 		history []message.HistoryMessage,
 		replyTo message.HistoryMessage,
 		aiChance float32,
+		forceAI bool,
 	) message.GenerationResult
 }
 
 type statIncer interface {
 	Inc(ctx context.Context, chatID, userID int64, op stats.OperationType, opts ...stats.Option)
+}
+
+type historyBuffer interface {
+	Add(chatID int64, author, text string)
+	Get(chatID int64) []message.HistoryMessage
 }

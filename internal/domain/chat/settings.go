@@ -9,4 +9,5 @@ type ChatSettings struct {
 	StickerReactChance *float32
 	VoiceReactChance   *float32
 	AIChance           *float32
+	PhotoReactChance   *float32
 }

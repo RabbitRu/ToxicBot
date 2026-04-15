@@ -21,6 +21,7 @@ var (
 		stats.OnUserLeftOperationType: "on_user_left",
 		stats.PersonalOperationType:   "personal",
 		stats.TaggerOperationType:     "tagger",
+		stats.OnPhotoOperationType:    "on_photo",
 	}
 	operationTypeToDomain = mapper.InvertMap(operationTypeFromDomain)
 

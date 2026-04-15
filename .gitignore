@@ -2,3 +2,5 @@
 .vscode
 .DS_Store
 sas.db
+.opik-tracing-enabled
+.serena
