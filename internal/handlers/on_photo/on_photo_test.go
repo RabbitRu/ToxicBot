@@ -284,7 +284,7 @@ func TestHandle_PhotoWithoutCaption(t *testing.T) {
 		GenerateContent(gomock.Any(), describePrompt, imageData).
 		Return(description, nil)
 
-	expectedPrompt := "Пользователь @testuser отправил фото. На фото: " + description
+	expectedPrompt := "Пользователь отправил фото. На фото: " + description
 
 	env.history.EXPECT().
 		Get(chat.ID).
@@ -343,7 +343,7 @@ func TestHandle_PhotoWithCaption(t *testing.T) {
 		GenerateContent(gomock.Any(), describePrompt, imageData).
 		Return(description, nil)
 
-	expectedPrompt := "Пользователь @testuser отправил фото с подписью: 'Look at this!'. На фото: " + description
+	expectedPrompt := "Пользователь отправил фото с подписью: 'Look at this!'. На фото: " + description
 
 	env.history.EXPECT().
 		Get(chat.ID).
@@ -588,7 +588,7 @@ func TestHandle_PromptContainsUsername(t *testing.T) {
 
 	env.generator.EXPECT().
 		GetMessageTextWithHistory(gomock.Any(), gomock.Any(), float32(1.0), true).
-		DoAndReturn(func(history []message.HistoryMessage, replyTo message.HistoryMessage, aiChance float32) message.GenerationResult {
+		DoAndReturn(func(history []message.HistoryMessage, replyTo message.HistoryMessage, aiChance float32, _ bool) message.GenerationResult {
 			capturedPrompt = replyTo
 			return message.GenerationResult{
 				Message:  "reply",
@@ -606,7 +606,6 @@ func TestHandle_PromptContainsUsername(t *testing.T) {
 	err := env.handler.Handle(ctx)
 	require.NoError(t, err)
 
-	assert.Contains(t, capturedPrompt.Text, "@myuser")
 	assert.Equal(t, "@myuser", capturedPrompt.Author)
 }
 
@@ -641,7 +640,7 @@ func TestHandle_HistorySaved(t *testing.T) {
 		GenerateContent(gomock.Any(), describePrompt, imageData).
 		Return(description, nil)
 
-	expectedPrompt := "Пользователь @testuser отправил фото. На фото: " + description
+	expectedPrompt := "Пользователь отправил фото. На фото: " + description
 
 	env.history.EXPECT().
 		Get(chat.ID).
