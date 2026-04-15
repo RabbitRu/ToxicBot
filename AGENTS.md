@@ -99,6 +99,7 @@ Two strategies (`internal/message/`):
 | `TELEGRAM_TOKEN` | Bot token from BotFather |
 | `SQLITE_FILE_PATH` | Path to SQLite database file |
 | `DEEPSEEK_API_KEY` | DeepSeek API key |
+| `GIGACHAT_AUTH_KEY` | GigaChat API key |
 | `GOOGLE_CREDENTIALS` | JSON with Google API credentials |
 | `GOOGLE_SPREADSHEET_ID` | Google Sheets spreadsheet ID |
 
