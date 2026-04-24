@@ -14,8 +14,9 @@ import (
 type Role string
 
 const (
-	RoleUser   Role = "user"
-	RoleSystem Role = "system"
+	RoleUser      Role = "user"
+	RoleSystem    Role = "system"
+	RoleAssistant Role = "assistant"
 )
 
 type Client struct {

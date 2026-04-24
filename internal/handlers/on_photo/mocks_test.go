@@ -14,9 +14,10 @@ import (
 	io "io"
 	reflect "reflect"
 
-	chatsettings "github.com/reijo1337/ToxicBot/internal/chatsettings"
+	chathistory "github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	chatsettings "github.com/reijo1337/ToxicBot/internal/features/chatsettings"
+	message "github.com/reijo1337/ToxicBot/internal/features/message"
 	stats "github.com/reijo1337/ToxicBot/internal/features/stats"
-	message "github.com/reijo1337/ToxicBot/internal/message"
 	gomock "go.uber.org/mock/gomock"
 	telebot "gopkg.in/telebot.v3"
 )
@@ -85,17 +86,17 @@ func (m *MockmessageGenerator) EXPECT() *MockmessageGeneratorMockRecorder {
 }
 
 // GetMessageTextWithHistory mocks base method.
-func (m *MockmessageGenerator) GetMessageTextWithHistory(history []message.HistoryMessage, replyTo message.HistoryMessage, aiChance float32, forceAI bool) message.GenerationResult {
+func (m *MockmessageGenerator) GetMessageTextWithHistory(history []chathistory.Entry, aiChance float32, forceAI bool) message.GenerationResult {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageTextWithHistory", history, replyTo, aiChance, forceAI)
+	ret := m.ctrl.Call(m, "GetMessageTextWithHistory", history, aiChance, forceAI)
 	ret0, _ := ret[0].(message.GenerationResult)
 	return ret0
 }
 
 // GetMessageTextWithHistory indicates an expected call of GetMessageTextWithHistory.
-func (mr *MockmessageGeneratorMockRecorder) GetMessageTextWithHistory(history, replyTo, aiChance, forceAI any) *gomock.Call {
+func (mr *MockmessageGeneratorMockRecorder) GetMessageTextWithHistory(history, aiChance, forceAI any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageTextWithHistory", reflect.TypeOf((*MockmessageGenerator)(nil).GetMessageTextWithHistory), history, replyTo, aiChance, forceAI)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageTextWithHistory", reflect.TypeOf((*MockmessageGenerator)(nil).GetMessageTextWithHistory), history, aiChance, forceAI)
 }
 
 // MocksettingsProvider is a mock of settingsProvider interface.
@@ -161,23 +162,28 @@ func (m *MockhistoryBuffer) EXPECT() *MockhistoryBufferMockRecorder {
 	return m.recorder
 }
 
-// Add mocks base method.
-func (m *MockhistoryBuffer) Add(chatID int64, author, text string) {
+// AddAll mocks base method.
+func (m *MockhistoryBuffer) AddAll(chatID int64, entries ...chathistory.Entry) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Add", chatID, author, text)
+	varargs := []any{chatID}
+	for _, a := range entries {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "AddAll", varargs...)
 }
 
-// Add indicates an expected call of Add.
-func (mr *MockhistoryBufferMockRecorder) Add(chatID, author, text any) *gomock.Call {
+// AddAll indicates an expected call of AddAll.
+func (mr *MockhistoryBufferMockRecorder) AddAll(chatID any, entries ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockhistoryBuffer)(nil).Add), chatID, author, text)
+	varargs := append([]any{chatID}, entries...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAll", reflect.TypeOf((*MockhistoryBuffer)(nil).AddAll), varargs...)
 }
 
 // Get mocks base method.
-func (m *MockhistoryBuffer) Get(chatID int64) []message.HistoryMessage {
+func (m *MockhistoryBuffer) Get(chatID int64) []chathistory.Entry {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", chatID)
-	ret0, _ := ret[0].([]message.HistoryMessage)
+	ret0, _ := ret[0].([]chathistory.Entry)
 	return ret0
 }
 
@@ -354,4 +360,48 @@ func (mr *MockstatIncerMockRecorder) Inc(ctx, chatID, userID, op any, opts ...an
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, chatID, userID, op}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Inc", reflect.TypeOf((*MockstatIncer)(nil).Inc), varargs...)
+}
+
+// MockbotReplier is a mock of botReplier interface.
+type MockbotReplier struct {
+	ctrl     *gomock.Controller
+	recorder *MockbotReplierMockRecorder
+	isgomock struct{}
+}
+
+// MockbotReplierMockRecorder is the mock recorder for MockbotReplier.
+type MockbotReplierMockRecorder struct {
+	mock *MockbotReplier
+}
+
+// NewMockbotReplier creates a new mock instance.
+func NewMockbotReplier(ctrl *gomock.Controller) *MockbotReplier {
+	mock := &MockbotReplier{ctrl: ctrl}
+	mock.recorder = &MockbotReplierMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockbotReplier) EXPECT() *MockbotReplierMockRecorder {
+	return m.recorder
+}
+
+// Reply mocks base method.
+func (m *MockbotReplier) Reply(to *telebot.Message, what any, opts ...any) (*telebot.Message, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{to, what}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Reply", varargs...)
+	ret0, _ := ret[0].(*telebot.Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Reply indicates an expected call of Reply.
+func (mr *MockbotReplierMockRecorder) Reply(to, what any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{to, what}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reply", reflect.TypeOf((*MockbotReplier)(nil).Reply), varargs...)
 }

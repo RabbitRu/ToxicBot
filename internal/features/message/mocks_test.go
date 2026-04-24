@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	deepseek "github.com/reijo1337/ToxicBot/internal/infrastructure/ai/deepseek"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -155,4 +156,86 @@ func (m *Mockrandomizer) Intn(n int) int {
 func (mr *MockrandomizerMockRecorder) Intn(n any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Intn", reflect.TypeOf((*Mockrandomizer)(nil).Intn), n)
+}
+
+// MockmeaningfullFilter is a mock of meaningfullFilter interface.
+type MockmeaningfullFilter struct {
+	ctrl     *gomock.Controller
+	recorder *MockmeaningfullFilterMockRecorder
+	isgomock struct{}
+}
+
+// MockmeaningfullFilterMockRecorder is the mock recorder for MockmeaningfullFilter.
+type MockmeaningfullFilterMockRecorder struct {
+	mock *MockmeaningfullFilter
+}
+
+// NewMockmeaningfullFilter creates a new mock instance.
+func NewMockmeaningfullFilter(ctrl *gomock.Controller) *MockmeaningfullFilter {
+	mock := &MockmeaningfullFilter{ctrl: ctrl}
+	mock.recorder = &MockmeaningfullFilterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockmeaningfullFilter) EXPECT() *MockmeaningfullFilterMockRecorder {
+	return m.recorder
+}
+
+// IsMeaningfulPhrase mocks base method.
+func (m *MockmeaningfullFilter) IsMeaningfulPhrase(text string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsMeaningfulPhrase", text)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsMeaningfulPhrase indicates an expected call of IsMeaningfulPhrase.
+func (mr *MockmeaningfullFilterMockRecorder) IsMeaningfulPhrase(text any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsMeaningfulPhrase", reflect.TypeOf((*MockmeaningfullFilter)(nil).IsMeaningfulPhrase), text)
+}
+
+// Mockai is a mock of ai interface.
+type Mockai struct {
+	ctrl     *gomock.Controller
+	recorder *MockaiMockRecorder
+	isgomock struct{}
+}
+
+// MockaiMockRecorder is the mock recorder for Mockai.
+type MockaiMockRecorder struct {
+	mock *Mockai
+}
+
+// NewMockai creates a new mock instance.
+func NewMockai(ctrl *gomock.Controller) *Mockai {
+	mock := &Mockai{ctrl: ctrl}
+	mock.recorder = &MockaiMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *Mockai) EXPECT() *MockaiMockRecorder {
+	return m.recorder
+}
+
+// Chat mocks base method.
+func (m *Mockai) Chat(ctx context.Context, msgs ...deepseek.ChatMessage) (string, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range msgs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Chat", varargs...)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Chat indicates an expected call of Chat.
+func (mr *MockaiMockRecorder) Chat(ctx any, msgs ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, msgs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chat", reflect.TypeOf((*Mockai)(nil).Chat), varargs...)
 }

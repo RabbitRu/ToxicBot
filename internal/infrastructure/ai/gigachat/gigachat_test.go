@@ -210,7 +210,7 @@ func TestClient_GetToken_Success(t *testing.T) {
 		assert.Equal(t, http.MethodPost, r.Method)
 		assert.Equal(t, "Basic test-auth-key", r.Header.Get("Authorization"))
 		assert.Equal(t, "application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
-		assert.NotEmpty(t, r.Header.Get("RqUID"))
+		assert.NotEmpty(t, r.Header.Get("RqUID")) //nolint
 
 		body, err := io.ReadAll(r.Body)
 		if !assert.NoError(t, err) {

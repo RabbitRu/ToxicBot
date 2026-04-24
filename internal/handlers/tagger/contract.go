@@ -4,8 +4,8 @@ package tagger
 import (
 	"context"
 
+	"github.com/reijo1337/ToxicBot/internal/features/message"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
-	"github.com/reijo1337/ToxicBot/internal/message"
 )
 
 type nicknameRepository interface {

@@ -1,6 +1,6 @@
 package stats
 
-import "github.com/reijo1337/ToxicBot/internal/message"
+import "github.com/reijo1337/ToxicBot/internal/features/message"
 
 type option struct {
 	extra *ResponseExtra

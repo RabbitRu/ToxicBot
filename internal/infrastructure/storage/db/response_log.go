@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/reijo1337/ToxicBot/internal/features/message"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
-	"github.com/reijo1337/ToxicBot/internal/message"
 	"github.com/reijo1337/ToxicBot/pkg/mapper"
 )
 

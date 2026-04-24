@@ -10,8 +10,10 @@
 package personal
 
 import (
+	context "context"
 	reflect "reflect"
 
+	stats "github.com/reijo1337/ToxicBot/internal/features/stats"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -52,4 +54,45 @@ func (m *MockmessageRepository) GetEnabledMessages() ([]string, error) {
 func (mr *MockmessageRepositoryMockRecorder) GetEnabledMessages() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnabledMessages", reflect.TypeOf((*MockmessageRepository)(nil).GetEnabledMessages))
+}
+
+// MockstatIncer is a mock of statIncer interface.
+type MockstatIncer struct {
+	ctrl     *gomock.Controller
+	recorder *MockstatIncerMockRecorder
+	isgomock struct{}
+}
+
+// MockstatIncerMockRecorder is the mock recorder for MockstatIncer.
+type MockstatIncerMockRecorder struct {
+	mock *MockstatIncer
+}
+
+// NewMockstatIncer creates a new mock instance.
+func NewMockstatIncer(ctrl *gomock.Controller) *MockstatIncer {
+	mock := &MockstatIncer{ctrl: ctrl}
+	mock.recorder = &MockstatIncerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockstatIncer) EXPECT() *MockstatIncerMockRecorder {
+	return m.recorder
+}
+
+// Inc mocks base method.
+func (m *MockstatIncer) Inc(ctx context.Context, chatID, userID int64, op stats.OperationType, opts ...stats.Option) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, chatID, userID, op}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "Inc", varargs...)
+}
+
+// Inc indicates an expected call of Inc.
+func (mr *MockstatIncerMockRecorder) Inc(ctx, chatID, userID, op any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, chatID, userID, op}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Inc", reflect.TypeOf((*MockstatIncer)(nil).Inc), varargs...)
 }

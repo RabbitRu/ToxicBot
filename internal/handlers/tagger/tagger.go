@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reijo1337/ToxicBot/internal/chatsettings"
+	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
 	"gopkg.in/telebot.v3"
 )

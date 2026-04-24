@@ -4,15 +4,15 @@ package bulling
 import (
 	"context"
 
+	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	"github.com/reijo1337/ToxicBot/internal/features/message"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
-	"github.com/reijo1337/ToxicBot/internal/message"
+	"gopkg.in/telebot.v3"
 )
 
 type messageGenerator interface {
-	GetMessageText(replyTo string, aiChance float32) message.GenerationResult
 	GetMessageTextWithHistory(
-		history []message.HistoryMessage,
-		replyTo message.HistoryMessage,
+		history []chathistory.Entry,
 		aiChance float32,
 		forceAI bool,
 	) message.GenerationResult
@@ -23,6 +23,11 @@ type statIncer interface {
 }
 
 type historyBuffer interface {
-	Add(chatID int64, author, text string)
-	Get(chatID int64) []message.HistoryMessage
+	Add(chatID int64, e chathistory.Entry)
+	AddAll(chatID int64, entries ...chathistory.Entry)
+	Get(chatID int64) []chathistory.Entry
+}
+
+type botReplier interface {
+	Reply(to *telebot.Message, what interface{}, opts ...interface{}) (*telebot.Message, error)
 }

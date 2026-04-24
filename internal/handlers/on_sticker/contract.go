@@ -4,7 +4,9 @@ package on_sticker
 import (
 	"context"
 
+	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
+	"gopkg.in/telebot.v3"
 )
 
 type stickerRepository interface {
@@ -23,4 +25,12 @@ type randomizer interface {
 
 type statIncer interface {
 	Inc(ctx context.Context, chatID, userID int64, op stats.OperationType, opts ...stats.Option)
+}
+
+type historyBuffer interface {
+	Add(chatID int64, e chathistory.Entry)
+}
+
+type botReplier interface {
+	Reply(to *telebot.Message, what interface{}, opts ...interface{}) (*telebot.Message, error)
 }

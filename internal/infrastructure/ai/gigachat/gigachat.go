@@ -145,7 +145,7 @@ func (c *Client) getTokenWithURL(ctx context.Context, tokenURL string) (string, 
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("RqUID", rqUID)
+	req.Header.Set("RqUID", rqUID) //nolint
 	req.Header.Set("Authorization", "Basic "+c.cfg.AuthKey)
 
 	resp, err := c.httpClient.Do(req)

@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reijo1337/ToxicBot/internal/chatsettings"
+	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
-	"github.com/reijo1337/ToxicBot/internal/message"
 	"github.com/reijo1337/ToxicBot/pkg/pointer"
 	"gopkg.in/telebot.v3"
 )
@@ -26,6 +26,7 @@ type Handler struct {
 	statIncer        statIncer
 	settingsProvider settingsProvider
 	history          historyBuffer
+	replier          botReplier
 	r                *rand.Rand
 	msgCount         map[string]*list.List
 	cooldown         map[string]time.Time
@@ -39,6 +40,7 @@ func New(
 	statIncer statIncer,
 	settingsProvider settingsProvider,
 	historyBuffer historyBuffer,
+	replier botReplier,
 ) (*Handler, error) {
 	return &Handler{
 		ctx:              ctx,
@@ -46,6 +48,7 @@ func New(
 		statIncer:        statIncer,
 		settingsProvider: settingsProvider,
 		history:          historyBuffer,
+		replier:          replier,
 		msgCount:         make(map[string]*list.List),
 		cooldown:         make(map[string]time.Time),
 		r:                rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -72,7 +75,20 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 		author = "Админ какого-то канала"
 	}
 
-	b.history.Add(chat.ID, author, ctx.Message().Text)
+	msg := ctx.Message()
+	replyToID := 0
+	if msg.ReplyTo != nil {
+		replyToID = msg.ReplyTo.ID
+	}
+
+	userEntry := chathistory.Entry{
+		ID:        msg.ID,
+		Time:      msg.Time(),
+		Author:    author,
+		Text:      msg.Text,
+		ReplyToID: replyToID,
+		FromBot:   false,
+	}
 
 	settings, err := b.settingsProvider.GetForChat(b.ctx, chat.ID)
 	if err != nil {
@@ -84,7 +100,7 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 	isCooldown := b.isCooldown(key)
 	isMsgThreshold := b.isMsgThreshold(
 		key,
-		ctx.Message().Time(),
+		msg.Time(),
 		settings.ThresholdCount,
 		settings.ThresholdTime,
 	)
@@ -92,17 +108,18 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 
 	if !isReplyOrMention {
 		if isCooldown || !isMsgThreshold {
+			// Non-triggering path: record the message for future context.
+			b.history.Add(chat.ID, userEntry)
 			return nil
 		}
 	}
 
-	// КД на булинг
 	b.setCooldown(key, settings.Cooldown)
 
-	history := b.history.Get(chat.ID)
-	text := b.generator.GetMessageTextWithHistory(
-		history,
-		message.HistoryMessage{Author: author, Text: ctx.Message().Text},
+	pastHistory := b.history.Get(chat.ID)
+	historyForLLM := append(pastHistory, userEntry)
+	result := b.generator.GetMessageTextWithHistory(
+		historyForLLM,
 		settings.AIChance,
 		false,
 	)
@@ -112,7 +129,7 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 		chat.ID,
 		user.ID,
 		stats.OnTextOperationType,
-		stats.WithGenStrategy(text.Strategy),
+		stats.WithGenStrategy(result.Strategy),
 	)
 
 	if err := ctx.Notify(telebot.Typing); err != nil {
@@ -120,7 +137,26 @@ func (b *Handler) Handle(ctx telebot.Context) error {
 	}
 	time.Sleep(time.Duration((float64(b.r.Intn(3)) + b.r.Float64()) * 1_000_000_000))
 
-	return ctx.Reply(text.Message)
+	sent, err := b.replier.Reply(msg, result.Message)
+	if err != nil {
+		// Reply failed — still record the user's turn so future context is not
+		// missing this message.
+		b.history.Add(chat.ID, userEntry)
+		return err
+	}
+
+	botEntry := chathistory.Entry{
+		ID:        sent.ID,
+		Time:      time.Now(),
+		Author:    "бот",
+		Text:      result.Message,
+		ReplyToID: msg.ID,
+		FromBot:   true,
+	}
+
+	b.history.AddAll(chat.ID, userEntry, botEntry)
+
+	return nil
 }
 
 func (b *Handler) isCooldown(key string) bool {

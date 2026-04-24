@@ -13,6 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
+	chathistory "github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	stats "github.com/reijo1337/ToxicBot/internal/features/stats"
 	gomock "go.uber.org/mock/gomock"
 	telebot "gopkg.in/telebot.v3"
 )
@@ -221,4 +223,125 @@ func (m *Mockdownloader) FileByID(fileID string) (telebot.File, error) {
 func (mr *MockdownloaderMockRecorder) FileByID(fileID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileByID", reflect.TypeOf((*Mockdownloader)(nil).FileByID), fileID)
+}
+
+// MockstatIncer is a mock of statIncer interface.
+type MockstatIncer struct {
+	ctrl     *gomock.Controller
+	recorder *MockstatIncerMockRecorder
+	isgomock struct{}
+}
+
+// MockstatIncerMockRecorder is the mock recorder for MockstatIncer.
+type MockstatIncerMockRecorder struct {
+	mock *MockstatIncer
+}
+
+// NewMockstatIncer creates a new mock instance.
+func NewMockstatIncer(ctrl *gomock.Controller) *MockstatIncer {
+	mock := &MockstatIncer{ctrl: ctrl}
+	mock.recorder = &MockstatIncerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockstatIncer) EXPECT() *MockstatIncerMockRecorder {
+	return m.recorder
+}
+
+// Inc mocks base method.
+func (m *MockstatIncer) Inc(ctx context.Context, chatID, userID int64, op stats.OperationType, opts ...stats.Option) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, chatID, userID, op}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "Inc", varargs...)
+}
+
+// Inc indicates an expected call of Inc.
+func (mr *MockstatIncerMockRecorder) Inc(ctx, chatID, userID, op any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, chatID, userID, op}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Inc", reflect.TypeOf((*MockstatIncer)(nil).Inc), varargs...)
+}
+
+// MockhistoryBuffer is a mock of historyBuffer interface.
+type MockhistoryBuffer struct {
+	ctrl     *gomock.Controller
+	recorder *MockhistoryBufferMockRecorder
+	isgomock struct{}
+}
+
+// MockhistoryBufferMockRecorder is the mock recorder for MockhistoryBuffer.
+type MockhistoryBufferMockRecorder struct {
+	mock *MockhistoryBuffer
+}
+
+// NewMockhistoryBuffer creates a new mock instance.
+func NewMockhistoryBuffer(ctrl *gomock.Controller) *MockhistoryBuffer {
+	mock := &MockhistoryBuffer{ctrl: ctrl}
+	mock.recorder = &MockhistoryBufferMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockhistoryBuffer) EXPECT() *MockhistoryBufferMockRecorder {
+	return m.recorder
+}
+
+// Add mocks base method.
+func (m *MockhistoryBuffer) Add(chatID int64, e chathistory.Entry) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Add", chatID, e)
+}
+
+// Add indicates an expected call of Add.
+func (mr *MockhistoryBufferMockRecorder) Add(chatID, e any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockhistoryBuffer)(nil).Add), chatID, e)
+}
+
+// MockbotReplier is a mock of botReplier interface.
+type MockbotReplier struct {
+	ctrl     *gomock.Controller
+	recorder *MockbotReplierMockRecorder
+	isgomock struct{}
+}
+
+// MockbotReplierMockRecorder is the mock recorder for MockbotReplier.
+type MockbotReplierMockRecorder struct {
+	mock *MockbotReplier
+}
+
+// NewMockbotReplier creates a new mock instance.
+func NewMockbotReplier(ctrl *gomock.Controller) *MockbotReplier {
+	mock := &MockbotReplier{ctrl: ctrl}
+	mock.recorder = &MockbotReplierMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockbotReplier) EXPECT() *MockbotReplierMockRecorder {
+	return m.recorder
+}
+
+// Reply mocks base method.
+func (m *MockbotReplier) Reply(to *telebot.Message, what any, opts ...any) (*telebot.Message, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{to, what}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Reply", varargs...)
+	ret0, _ := ret[0].(*telebot.Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Reply indicates an expected call of Reply.
+func (mr *MockbotReplierMockRecorder) Reply(to, what any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{to, what}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reply", reflect.TypeOf((*MockbotReplier)(nil).Reply), varargs...)
 }

@@ -6,7 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reijo1337/ToxicBot/internal/chatsettings"
+	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
 	"github.com/reijo1337/ToxicBot/pkg/pointer"
 	"gopkg.in/telebot.v3"
@@ -23,6 +24,8 @@ type StickerReactions struct {
 	logger               logger
 	statIncer            statIncer
 	settingsProvider     settingsProvider
+	history              historyBuffer
+	replier              botReplier
 	stickers             []string
 	stickersFromPacks    []string
 	muStk                sync.RWMutex
@@ -37,6 +40,8 @@ func New(
 	statIncer statIncer,
 	stickersFromPacks []string,
 	settingsProvider settingsProvider,
+	history historyBuffer,
+	replier botReplier,
 	updateStickersPeriod time.Duration,
 ) (*StickerReactions, error) {
 	out := StickerReactions{
@@ -47,6 +52,8 @@ func New(
 		r:                    r,
 		statIncer:            statIncer,
 		settingsProvider:     settingsProvider,
+		history:              history,
+		replier:              replier,
 		updateStickersPeriod: updateStickersPeriod,
 	}
 
@@ -65,6 +72,22 @@ func (*StickerReactions) Slug() string {
 
 func (sr *StickerReactions) Handle(ctx telebot.Context) error {
 	chat := pointer.From(ctx.Chat())
+	sender := pointer.From(ctx.Sender())
+	msg := ctx.Message()
+
+	author := formatAuthor(sender)
+	replyToID := 0
+	if msg.ReplyTo != nil {
+		replyToID = msg.ReplyTo.ID
+	}
+	sr.history.Add(chat.ID, chathistory.Entry{
+		ID:        msg.ID,
+		Time:      msg.Time(),
+		Author:    author,
+		Text:      "*прислал стикер*",
+		ReplyToID: replyToID,
+		FromBot:   false,
+	})
 
 	settings, err := sr.settingsProvider.GetForChat(sr.ctx, chat.ID)
 	if err != nil {
@@ -87,9 +110,30 @@ func (sr *StickerReactions) Handle(ctx telebot.Context) error {
 	go sr.statIncer.Inc(
 		sr.ctx,
 		chat.ID,
-		pointer.From(ctx.Sender()).ID,
+		sender.ID,
 		stats.OnStickerOperationType,
 	)
 
-	return ctx.Reply(&telebot.Sticker{File: telebot.File{FileID: sticker}})
+	sent, err := sr.replier.Reply(msg, &telebot.Sticker{File: telebot.File{FileID: sticker}})
+	if err != nil {
+		return err
+	}
+
+	sr.history.Add(chat.ID, chathistory.Entry{
+		ID:        sent.ID,
+		Time:      time.Now(),
+		Author:    "бот",
+		Text:      "*прислал стикер*",
+		ReplyToID: msg.ID,
+		FromBot:   true,
+	})
+
+	return nil
+}
+
+func formatAuthor(user telebot.User) string {
+	if user.Username != "" {
+		return "@" + user.Username
+	}
+	return user.FirstName
 }

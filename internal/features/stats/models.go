@@ -3,7 +3,7 @@ package stats
 import (
 	"time"
 
-	"github.com/reijo1337/ToxicBot/internal/message"
+	"github.com/reijo1337/ToxicBot/internal/features/message"
 )
 
 type OperationType uint8

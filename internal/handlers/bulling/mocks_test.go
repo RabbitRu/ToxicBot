@@ -13,9 +13,11 @@ import (
 	context "context"
 	reflect "reflect"
 
+	chathistory "github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	message "github.com/reijo1337/ToxicBot/internal/features/message"
 	stats "github.com/reijo1337/ToxicBot/internal/features/stats"
-	message "github.com/reijo1337/ToxicBot/internal/message"
 	gomock "go.uber.org/mock/gomock"
+	telebot "gopkg.in/telebot.v3"
 )
 
 // MockmessageGenerator is a mock of messageGenerator interface.
@@ -42,32 +44,18 @@ func (m *MockmessageGenerator) EXPECT() *MockmessageGeneratorMockRecorder {
 	return m.recorder
 }
 
-// GetMessageText mocks base method.
-func (m *MockmessageGenerator) GetMessageText(replyTo string, aiChance float32) message.GenerationResult {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageText", replyTo, aiChance)
-	ret0, _ := ret[0].(message.GenerationResult)
-	return ret0
-}
-
-// GetMessageText indicates an expected call of GetMessageText.
-func (mr *MockmessageGeneratorMockRecorder) GetMessageText(replyTo, aiChance any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageText", reflect.TypeOf((*MockmessageGenerator)(nil).GetMessageText), replyTo, aiChance)
-}
-
 // GetMessageTextWithHistory mocks base method.
-func (m *MockmessageGenerator) GetMessageTextWithHistory(history []message.HistoryMessage, replyTo message.HistoryMessage, aiChance float32) message.GenerationResult {
+func (m *MockmessageGenerator) GetMessageTextWithHistory(history []chathistory.Entry, aiChance float32, forceAI bool) message.GenerationResult {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageTextWithHistory", history, replyTo, aiChance)
+	ret := m.ctrl.Call(m, "GetMessageTextWithHistory", history, aiChance, forceAI)
 	ret0, _ := ret[0].(message.GenerationResult)
 	return ret0
 }
 
 // GetMessageTextWithHistory indicates an expected call of GetMessageTextWithHistory.
-func (mr *MockmessageGeneratorMockRecorder) GetMessageTextWithHistory(history, replyTo, aiChance any) *gomock.Call {
+func (mr *MockmessageGeneratorMockRecorder) GetMessageTextWithHistory(history, aiChance, forceAI any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageTextWithHistory", reflect.TypeOf((*MockmessageGenerator)(nil).GetMessageTextWithHistory), history, replyTo, aiChance)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageTextWithHistory", reflect.TypeOf((*MockmessageGenerator)(nil).GetMessageTextWithHistory), history, aiChance, forceAI)
 }
 
 // MockstatIncer is a mock of statIncer interface.
@@ -136,22 +124,39 @@ func (m *MockhistoryBuffer) EXPECT() *MockhistoryBufferMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockhistoryBuffer) Add(chatID int64, author, text string) {
+func (m *MockhistoryBuffer) Add(chatID int64, e chathistory.Entry) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Add", chatID, author, text)
+	m.ctrl.Call(m, "Add", chatID, e)
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockhistoryBufferMockRecorder) Add(chatID, author, text any) *gomock.Call {
+func (mr *MockhistoryBufferMockRecorder) Add(chatID, e any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockhistoryBuffer)(nil).Add), chatID, author, text)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockhistoryBuffer)(nil).Add), chatID, e)
+}
+
+// AddAll mocks base method.
+func (m *MockhistoryBuffer) AddAll(chatID int64, entries ...chathistory.Entry) {
+	m.ctrl.T.Helper()
+	varargs := []any{chatID}
+	for _, a := range entries {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "AddAll", varargs...)
+}
+
+// AddAll indicates an expected call of AddAll.
+func (mr *MockhistoryBufferMockRecorder) AddAll(chatID any, entries ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{chatID}, entries...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAll", reflect.TypeOf((*MockhistoryBuffer)(nil).AddAll), varargs...)
 }
 
 // Get mocks base method.
-func (m *MockhistoryBuffer) Get(chatID int64) []message.HistoryMessage {
+func (m *MockhistoryBuffer) Get(chatID int64) []chathistory.Entry {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", chatID)
-	ret0, _ := ret[0].([]message.HistoryMessage)
+	ret0, _ := ret[0].([]chathistory.Entry)
 	return ret0
 }
 
@@ -159,4 +164,48 @@ func (m *MockhistoryBuffer) Get(chatID int64) []message.HistoryMessage {
 func (mr *MockhistoryBufferMockRecorder) Get(chatID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockhistoryBuffer)(nil).Get), chatID)
+}
+
+// MockbotReplier is a mock of botReplier interface.
+type MockbotReplier struct {
+	ctrl     *gomock.Controller
+	recorder *MockbotReplierMockRecorder
+	isgomock struct{}
+}
+
+// MockbotReplierMockRecorder is the mock recorder for MockbotReplier.
+type MockbotReplierMockRecorder struct {
+	mock *MockbotReplier
+}
+
+// NewMockbotReplier creates a new mock instance.
+func NewMockbotReplier(ctrl *gomock.Controller) *MockbotReplier {
+	mock := &MockbotReplier{ctrl: ctrl}
+	mock.recorder = &MockbotReplierMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockbotReplier) EXPECT() *MockbotReplierMockRecorder {
+	return m.recorder
+}
+
+// Reply mocks base method.
+func (m *MockbotReplier) Reply(to *telebot.Message, what any, opts ...any) (*telebot.Message, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{to, what}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Reply", varargs...)
+	ret0, _ := ret[0].(*telebot.Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Reply indicates an expected call of Reply.
+func (mr *MockbotReplierMockRecorder) Reply(to, what any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{to, what}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reply", reflect.TypeOf((*MockbotReplier)(nil).Reply), varargs...)
 }

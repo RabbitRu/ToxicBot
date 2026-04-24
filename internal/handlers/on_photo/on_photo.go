@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
-	"github.com/reijo1337/ToxicBot/internal/message"
 	"gopkg.in/telebot.v3"
 )
 
@@ -24,6 +24,7 @@ type Handler struct {
 	history          historyBuffer
 	downloader       downloader
 	fileReader       fileReader
+	replier          botReplier
 	logger           logger
 	statIncer        statIncer
 	botID            int64
@@ -40,6 +41,7 @@ func New(
 	history historyBuffer,
 	downloader downloader,
 	fileReader fileReader,
+	replier botReplier,
 	logger logger,
 	statIncer statIncer,
 	botID int64,
@@ -52,6 +54,7 @@ func New(
 		history:          history,
 		downloader:       downloader,
 		fileReader:       fileReader,
+		replier:          replier,
 		logger:           logger,
 		statIncer:        statIncer,
 		botID:            botID,
@@ -77,7 +80,6 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 		return nil
 	}
 
-	// Альбом — обрабатываем только первое фото
 	if msg.AlbumID != "" {
 		if !h.tryClaimAlbum(msg.AlbumID) {
 			return nil
@@ -97,7 +99,6 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 		}
 	}
 
-	// Скачиваем файл
 	file, err := h.downloader.FileByID(msg.Photo.FileID)
 	if err != nil {
 		h.logger.Warn(
@@ -138,15 +139,23 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 	author := formatAuthor(sender)
 	promptText := buildPrompt(msg.Caption, description)
 
-	history := h.history.Get(chat.ID)
-	result := h.generator.GetMessageTextWithHistory(
-		history,
-		message.HistoryMessage{Author: author, Text: promptText},
-		1.0,
-		true,
-	)
+	replyToID := 0
+	if msg.ReplyTo != nil {
+		replyToID = msg.ReplyTo.ID
+	}
 
-	h.history.Add(chat.ID, author, promptText)
+	userEntry := chathistory.Entry{
+		ID:        msg.ID,
+		Time:      msg.Time(),
+		Author:    author,
+		Text:      promptText,
+		ReplyToID: replyToID,
+		FromBot:   false,
+	}
+
+	pastHistory := h.history.Get(chat.ID)
+	historyForLLM := append(pastHistory, userEntry)
+	result := h.generator.GetMessageTextWithHistory(historyForLLM, 1.0, true)
 
 	go h.statIncer.Inc(
 		h.ctx,
@@ -161,7 +170,23 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 	}
 	time.Sleep(time.Duration((float64(h.r.Intn(3)) + h.r.Float64()) * 1_000_000_000))
 
-	return ctx.Reply(result.Message)
+	sent, err := h.replier.Reply(msg, result.Message)
+	if err != nil {
+		return err
+	}
+
+	botEntry := chathistory.Entry{
+		ID:        sent.ID,
+		Time:      time.Now(),
+		Author:    "бот",
+		Text:      result.Message,
+		ReplyToID: msg.ID,
+		FromBot:   true,
+	}
+
+	h.history.AddAll(chat.ID, userEntry, botEntry)
+
+	return nil
 }
 
 func (h *Handler) isReplyToBot(ctx telebot.Context) bool {

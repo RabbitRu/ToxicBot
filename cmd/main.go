@@ -11,9 +11,11 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/reijo1337/ToxicBot/internal/chathistory"
-	"github.com/reijo1337/ToxicBot/internal/chatsettings"
 	"github.com/reijo1337/ToxicBot/internal/config"
+	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
+	"github.com/reijo1337/ToxicBot/internal/features/message"
+	"github.com/reijo1337/ToxicBot/internal/features/phrase_filter"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
 	"github.com/reijo1337/ToxicBot/internal/handlers"
 	"github.com/reijo1337/ToxicBot/internal/handlers/bulling"
@@ -31,8 +33,6 @@ import (
 	"github.com/reijo1337/ToxicBot/internal/infrastructure/sheets"
 	"github.com/reijo1337/ToxicBot/internal/infrastructure/sheets/google_spreadsheet"
 	"github.com/reijo1337/ToxicBot/internal/infrastructure/storage/db"
-	"github.com/reijo1337/ToxicBot/internal/message"
-	"github.com/reijo1337/ToxicBot/internal/phrase_filter"
 	"github.com/reijo1337/ToxicBot/pkg/logger"
 	"github.com/reijo1337/ToxicBot/pkg/migrator"
 	"gopkg.in/telebot.v3"
@@ -222,6 +222,7 @@ func main() {
 		statsIncer,
 		settingsProvider,
 		chatHistory,
+		b,
 	)
 	if err != nil {
 		logger.Fatal(
@@ -264,6 +265,8 @@ func main() {
 		statsIncer,
 		stickersFromPacks,
 		settingsProvider,
+		chatHistory,
+		b,
 		cfg.UpdateStickersPeriod,
 	)
 	if err != nil {
@@ -280,6 +283,8 @@ func main() {
 		random,
 		statsIncer,
 		settingsProvider,
+		chatHistory,
+		b,
 		cfg.UpdateVoicesPeriod,
 		b,
 	)
@@ -298,6 +303,7 @@ func main() {
 		chatHistory,
 		b,
 		&botFileReader{bot: b},
+		b,
 		logger,
 		statsIncer,
 		b.Me.ID,

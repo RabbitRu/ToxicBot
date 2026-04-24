@@ -6,7 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reijo1337/ToxicBot/internal/chatsettings"
+	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
+	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
 	"github.com/reijo1337/ToxicBot/pkg/pointer"
 	"gopkg.in/telebot.v3"
@@ -24,6 +25,8 @@ type Handler struct {
 	logger           logger
 	statIncer        statIncer
 	settingsProvider settingsProvider
+	history          historyBuffer
+	replier          botReplier
 	voices           []string
 	muVcs            sync.RWMutex
 	updatePeriod     time.Duration
@@ -36,6 +39,8 @@ func New(
 	r randomizer,
 	statIncer statIncer,
 	settingsProvider settingsProvider,
+	history historyBuffer,
+	replier botReplier,
 	updatePeriod time.Duration,
 	downloader downloader,
 ) (*Handler, error) {
@@ -46,6 +51,8 @@ func New(
 		r:                r,
 		statIncer:        statIncer,
 		settingsProvider: settingsProvider,
+		history:          history,
+		replier:          replier,
 		updatePeriod:     updatePeriod,
 		downloader:       downloader,
 	}
@@ -65,6 +72,22 @@ func (h *Handler) Slug() string {
 
 func (h *Handler) Handle(ctx telebot.Context) error {
 	chat := pointer.From(ctx.Chat())
+	sender := pointer.From(ctx.Sender())
+	msg := ctx.Message()
+
+	author := formatAuthor(sender)
+	replyToID := 0
+	if msg.ReplyTo != nil {
+		replyToID = msg.ReplyTo.ID
+	}
+	h.history.Add(chat.ID, chathistory.Entry{
+		ID:        msg.ID,
+		Time:      msg.Time(),
+		Author:    author,
+		Text:      "*прислал голосовое*",
+		ReplyToID: replyToID,
+		FromBot:   false,
+	})
 
 	settings, err := h.settingsProvider.GetForChat(h.ctx, chat.ID)
 	if err != nil {
@@ -81,7 +104,7 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 	go h.statIncer.Inc(
 		h.ctx,
 		chat.ID,
-		pointer.From(ctx.Sender()).ID,
+		sender.ID,
 		stats.OnVoiceOperationType,
 	)
 
@@ -100,7 +123,7 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 
 	response := telebot.Voice{File: voice}
 
-	err = ctx.Reply(&response)
+	sent, err := h.replier.Reply(msg, &response)
 	if err != nil {
 		h.logger.Error(
 			h.logger.WithError(
@@ -112,6 +135,24 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 			),
 			"can't send voice",
 		)
+		return err
 	}
-	return err
+
+	h.history.Add(chat.ID, chathistory.Entry{
+		ID:        sent.ID,
+		Time:      time.Now(),
+		Author:    "бот",
+		Text:      "*прислал голосовое*",
+		ReplyToID: msg.ID,
+		FromBot:   true,
+	})
+
+	return nil
+}
+
+func formatAuthor(user telebot.User) string {
+	if user.Username != "" {
+		return "@" + user.Username
+	}
+	return user.FirstName
 }

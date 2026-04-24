@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/reijo1337/ToxicBot/internal/chatsettings"
 	"github.com/reijo1337/ToxicBot/internal/domain/chat"
+	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
 	"gopkg.in/telebot.v3"
 )
 
