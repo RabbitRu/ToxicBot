@@ -153,9 +153,9 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 		FromBot:   false,
 	}
 
-	pastHistory := h.history.Get(chat.ID)
-	historyForLLM := append(pastHistory, userEntry)
-	result := h.generator.GetMessageTextWithHistory(historyForLLM, 1.0, true)
+	history := h.history.Get(chat.ID)
+	history = append(history, userEntry)
+	result := h.generator.GetMessageTextWithHistory(history, 1.0, true)
 
 	go h.statIncer.Inc(
 		h.ctx,

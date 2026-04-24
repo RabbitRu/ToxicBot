@@ -27,6 +27,7 @@ const (
 // embedded nil interface — tests must only touch methods the handler calls.
 type fakeContext struct {
 	telebot.Context
+
 	chat   *telebot.Chat
 	sender *telebot.User
 	msg    *telebot.Message
@@ -102,8 +103,8 @@ func photoMessage(msgID int, caption string, replyTo *telebot.Message) *telebot.
 	}
 }
 
-func replyToBotMessage(msgID int) *telebot.Message {
-	return &telebot.Message{ID: msgID, Sender: &telebot.User{ID: testBotID}}
+func replyToBotMessage() *telebot.Message {
+	return &telebot.Message{ID: 999, Sender: &telebot.User{ID: testBotID}}
 }
 
 func newCtx(msg *telebot.Message, sender *telebot.User) *fakeContext {
@@ -132,7 +133,7 @@ func TestHandle_HappyPath_WritesPairViaAddAll(t *testing.T) {
 	env := newTestEnv(t)
 	env.setupPhotoPipeline("кот ест торт")
 
-	msg := photoMessage(50, "смотри", replyToBotMessage(999))
+	msg := photoMessage(50, "смотри", replyToBotMessage())
 	ctx := newCtx(msg, goodSender())
 
 	var capturedHistory []chathistory.Entry
@@ -145,7 +146,10 @@ func TestHandle_HappyPath_WritesPairViaAddAll(t *testing.T) {
 			GetMessageTextWithHistory(gomock.Any(), float32(1.0), true).
 			DoAndReturn(func(h []chathistory.Entry, _ float32, _ bool) message.GenerationResult {
 				capturedHistory = h
-				return message.GenerationResult{Message: "отвали", Strategy: message.AiGenerationStrategy}
+				return message.GenerationResult{
+					Message:  "отвали",
+					Strategy: message.AiGenerationStrategy,
+				}
 			}),
 		env.replier.EXPECT().Reply(msg, "отвали").Return(&telebot.Message{ID: 51}, nil),
 		env.history.EXPECT().
@@ -204,7 +208,11 @@ func TestHandle_NilSender_ReturnsNil(t *testing.T) {
 
 	env := newTestEnv(t)
 
-	ctx := &fakeContext{chat: &telebot.Chat{ID: testChatID}, sender: nil, msg: photoMessage(1, "", nil)}
+	ctx := &fakeContext{
+		chat:   &telebot.Chat{ID: testChatID},
+		sender: nil,
+		msg:    photoMessage(1, "", nil),
+	}
 	require.NoError(t, env.handler.Handle(ctx))
 }
 
@@ -223,7 +231,7 @@ func TestHandle_DescriberError_NoHistoryWrite(t *testing.T) {
 
 	env := newTestEnv(t)
 
-	msg := photoMessage(50, "", replyToBotMessage(999))
+	msg := photoMessage(50, "", replyToBotMessage())
 	ctx := newCtx(msg, goodSender())
 
 	env.downloader.EXPECT().FileByID("photo-id").
@@ -245,7 +253,7 @@ func TestHandle_ReplierError_NoAddAll(t *testing.T) {
 	env := newTestEnv(t)
 	env.setupPhotoPipeline("описание")
 
-	msg := photoMessage(50, "", replyToBotMessage(999))
+	msg := photoMessage(50, "", replyToBotMessage())
 	ctx := newCtx(msg, goodSender())
 
 	gomock.InOrder(
@@ -267,9 +275,9 @@ func TestHandle_AlbumDedup_SkipsSecondPhotoInSameAlbum(t *testing.T) {
 	env := newTestEnv(t)
 	env.setupPhotoPipeline("кот")
 
-	first := photoMessage(50, "", replyToBotMessage(999))
+	first := photoMessage(50, "", replyToBotMessage())
 	first.AlbumID = "album-1"
-	second := photoMessage(51, "", replyToBotMessage(999))
+	second := photoMessage(51, "", replyToBotMessage())
 	second.AlbumID = "album-1"
 
 	gomock.InOrder(
@@ -292,7 +300,7 @@ func TestHandle_UsesFirstNameWhenUsernameEmpty(t *testing.T) {
 	env.setupPhotoPipeline("что-то")
 
 	sender := &telebot.User{ID: 7, FirstName: "Боб"}
-	msg := photoMessage(50, "", replyToBotMessage(999))
+	msg := photoMessage(50, "", replyToBotMessage())
 	ctx := newCtx(msg, sender)
 
 	var capturedPair []chathistory.Entry

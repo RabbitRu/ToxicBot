@@ -1,6 +1,11 @@
 GO?=go
 GOPATH?=$(shell go env GOPATH)
 GOPACKAGES=$(shell go list ./...)
+GOLANGCI_LINT_VERSION ?= v2.11.3
+GOLANGCI_LINT_DOCKER = docker run --rm \
+	-v $(CURDIR):/app \
+	-w /app \
+	golangci/golangci-lint:$(GOLANGCI_LINT_VERSION)
 
 ### билдит докер образ для выравнивания структур
 align-build:
@@ -12,14 +17,14 @@ align:
 
 ### врубает линтер
 lint:
-	docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v2.2.2 golangci-lint run -v
+	$(GOLANGCI_LINT_DOCKER) golangci-lint run ./...
 
 ### выравнивает импорты
 imports:
 	docker run --rm -v $(pwd):/data cytopia/goimports -d .
 
 fmt:
-	docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v2.2.2 golangci-lint fmt -v
+	$(GOLANGCI_LINT_DOCKER) golangci-lint fmt ./...
 
 migration:
 	docker run -v $(PWD)/db/migrations:/migrations migrate/migrate:v4.18.3 create -ext sql -dir /migrations -seq $(name)

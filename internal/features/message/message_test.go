@@ -39,9 +39,27 @@ func TestGenerator_WithHistory_SendsChatCompletionsShape(t *testing.T) {
 	}
 
 	history := []chathistory.Entry{
-		{ID: 1, Time: time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC), Author: "@alice", Text: "привет"},
-		{ID: 2, Time: time.Date(2026, 4, 24, 14, 0, 1, 0, time.UTC), Author: "бот", Text: "отвали", FromBot: true, ReplyToID: 1},
-		{ID: 3, Time: time.Date(2026, 4, 24, 14, 0, 2, 0, time.UTC), Author: "@alice", Text: "йо", ReplyToID: 2},
+		{
+			ID:     1,
+			Time:   time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC),
+			Author: "@alice",
+			Text:   "привет",
+		},
+		{
+			ID:        2,
+			Time:      time.Date(2026, 4, 24, 14, 0, 1, 0, time.UTC),
+			Author:    "бот",
+			Text:      "отвали",
+			FromBot:   true,
+			ReplyToID: 1,
+		},
+		{
+			ID:        3,
+			Time:      time.Date(2026, 4, 24, 14, 0, 2, 0, time.UTC),
+			Author:    "@alice",
+			Text:      "йо",
+			ReplyToID: 2,
+		},
 	}
 
 	res := g.GetMessageTextWithHistory(history, 1.0, false)

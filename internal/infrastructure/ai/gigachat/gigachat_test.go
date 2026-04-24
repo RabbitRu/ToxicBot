@@ -43,7 +43,7 @@ func TestClient_GenerateContent_Success(t *testing.T) {
 		assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
 		assert.Contains(t, r.Header.Get("Content-Type"), "multipart/form-data")
 
-		err := r.ParseMultipartForm(10 << 20)
+		err := r.ParseMultipartForm(10 << 20) //nolint
 		if !assert.NoError(t, err) {
 			return
 		}
@@ -59,7 +59,7 @@ func TestClient_GenerateContent_Success(t *testing.T) {
 			return
 		}
 		assert.Equal(t, imageBytes, data)
-		assert.Equal(t, "general", r.FormValue("purpose"))
+		assert.Equal(t, "general", r.FormValue("purpose")) //nolint
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(uploadResponse{ID: "file-123"}) //nolint

@@ -57,8 +57,18 @@ func TestBuildChatCompletions_UserEntryBecomesUserRole(t *testing.T) {
 
 	system := "SYS"
 	history := []chathistory.Entry{
-		{ID: 1, Time: time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC), Author: "@alice", Text: "привет"},
-		{ID: 2, Time: time.Date(2026, 4, 24, 14, 1, 0, 0, time.UTC), Author: "@alice", Text: "ответь"},
+		{
+			ID:     1,
+			Time:   time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC),
+			Author: "@alice",
+			Text:   "привет",
+		},
+		{
+			ID:     2,
+			Time:   time.Date(2026, 4, 24, 14, 1, 0, 0, time.UTC),
+			Author: "@alice",
+			Text:   "ответь",
+		},
 	}
 
 	msgs := buildChatCompletions(system, history)
@@ -75,10 +85,22 @@ func TestBuildChatCompletions_UserEntryBecomesUserRole(t *testing.T) {
 
 func TestBuildChatCompletions_BotEntryBecomesAssistantRole(t *testing.T) {
 	t.Parallel()
-
+	//nolint
 	history := []chathistory.Entry{
-		{ID: 1, Time: time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC), Author: "@alice", Text: "привет"},
-		{ID: 2, Time: time.Date(2026, 4, 24, 14, 0, 1, 0, time.UTC), Author: "бот", Text: "отвали", FromBot: true, ReplyToID: 1},
+		{
+			ID:     1,
+			Time:   time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC),
+			Author: "@alice",
+			Text:   "привет",
+		},
+		{
+			ID:        2,
+			Time:      time.Date(2026, 4, 24, 14, 0, 1, 0, time.UTC),
+			Author:    "бот",
+			Text:      "отвали",
+			FromBot:   true,
+			ReplyToID: 1,
+		},
 	}
 	trigger := chathistory.Entry{
 		ID: 3, Time: time.Date(2026, 4, 24, 14, 0, 2, 0, time.UTC),
@@ -101,7 +123,12 @@ func TestBuildChatCompletions_EmptyHistory(t *testing.T) {
 	t.Parallel()
 
 	history := []chathistory.Entry{
-		{ID: 1, Time: time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC), Author: "@alice", Text: "привет"},
+		{
+			ID:     1,
+			Time:   time.Date(2026, 4, 24, 14, 0, 0, 0, time.UTC),
+			Author: "@alice",
+			Text:   "привет",
+		},
 	}
 
 	msgs := buildChatCompletions("SYS", history)
