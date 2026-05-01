@@ -116,7 +116,7 @@ func main() {
 	}
 
 	chatHistory := chathistory.NewBuffer(
-		50,
+		100,
 		chathistory.WithStore(chatHistoryStorage),
 		chathistory.WithLogger(logger),
 	)
@@ -179,6 +179,8 @@ func main() {
 		)
 	}
 
+	botAuthor := "@" + b.Me.Username
+
 	igorHandler, err := personal.New(
 		ctx,
 		"igor",
@@ -228,6 +230,7 @@ func main() {
 		settingsProvider,
 		chatHistory,
 		b,
+		botAuthor,
 	)
 	if err != nil {
 		logger.Fatal(
@@ -273,6 +276,7 @@ func main() {
 		chatHistory,
 		b,
 		cfg.UpdateStickersPeriod,
+		botAuthor,
 	)
 	if err != nil {
 		logger.Fatal(
@@ -292,6 +296,7 @@ func main() {
 		b,
 		cfg.UpdateVoicesPeriod,
 		b,
+		botAuthor,
 	)
 	if err != nil {
 		logger.Fatal(
@@ -312,6 +317,7 @@ func main() {
 		logger,
 		statsIncer,
 		b.Me.ID,
+		botAuthor,
 	)
 
 	taggerHandler, err := tagger.New(

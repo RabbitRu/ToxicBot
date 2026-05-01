@@ -76,6 +76,52 @@ func SanitizeAuthor(username, firstName string, userID int64, isBot bool) string
 	return cleaned
 }
 
+// StripOutputMsgEnvelope removes a `<msg ...>...</msg>` wrapper that the model
+// echoes back at the start of its reply. It strips:
+//   - the leading envelope when the trimmed string starts with `<msg`;
+//   - any trailing chatter the model appends after the closing `</msg>`.
+//
+// It refuses to touch the string when the envelope is nested (another `<msg`
+// inside the inner body) or when the leading text is not `<msg` at all
+// (anti-injection: don't accidentally unwrap user-quoted content sitting in
+// the middle of a sentence).
+func StripOutputMsgEnvelope(s string) string {
+	trimmed := strings.TrimSpace(s)
+	if !strings.HasPrefix(trimmed, "<msg") {
+		return s
+	}
+
+	// The opening must look like `<msg` followed by either `>` or whitespace.
+	// `HasPrefix` only guarantees len >= 4, so the equality case (`<msg`
+	// alone, no attributes, no closing) must be filtered out before indexing.
+	if len(trimmed) <= len("<msg") {
+		return s
+	}
+	switch trimmed[len("<msg")] {
+	case '>', ' ', '\t':
+	default:
+		return s
+	}
+
+	_, body, ok := strings.Cut(trimmed, ">")
+	if !ok {
+		return s
+	}
+
+	inner, _, ok := strings.Cut(body, "</msg>")
+	if !ok {
+		return s
+	}
+
+	// Refuse to strip a nested wrapper — the inner body must not contain
+	// another `<msg` token.
+	if strings.Contains(inner, "<msg") {
+		return s
+	}
+
+	return strings.TrimSpace(inner)
+}
+
 func isStripped(r rune) bool {
 	if r <= 0x1F {
 		return true

@@ -8,6 +8,7 @@ import (
 
 	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
 	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
+	"github.com/reijo1337/ToxicBot/internal/features/message"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
 	"github.com/reijo1337/ToxicBot/pkg/pointer"
 	"gopkg.in/telebot.v3"
@@ -27,6 +28,7 @@ type Handler struct {
 	settingsProvider settingsProvider
 	history          historyBuffer
 	replier          botReplier
+	botAuthor        string
 	voices           []string
 	muVcs            sync.RWMutex
 	updatePeriod     time.Duration
@@ -43,6 +45,7 @@ func New(
 	replier botReplier,
 	updatePeriod time.Duration,
 	downloader downloader,
+	botAuthor string,
 ) (*Handler, error) {
 	out := Handler{
 		ctx:              ctx,
@@ -55,6 +58,7 @@ func New(
 		replier:          replier,
 		updatePeriod:     updatePeriod,
 		downloader:       downloader,
+		botAuthor:        botAuthor,
 	}
 
 	if err := out.reloadVoices(); err != nil {
@@ -75,7 +79,7 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 	sender := pointer.From(ctx.Sender())
 	msg := ctx.Message()
 
-	author := formatAuthor(sender)
+	author := message.SanitizeAuthor(sender.Username, sender.FirstName, sender.ID, sender.IsBot)
 	replyToID := 0
 	if msg.ReplyTo != nil {
 		replyToID = msg.ReplyTo.ID
@@ -141,18 +145,11 @@ func (h *Handler) Handle(ctx telebot.Context) error {
 	h.history.Add(chat.ID, chathistory.Entry{
 		ID:        sent.ID,
 		Time:      time.Now(),
-		Author:    "бот",
+		Author:    h.botAuthor,
 		Text:      "*прислал голосовое*",
 		ReplyToID: msg.ID,
 		FromBot:   true,
 	})
 
 	return nil
-}
-
-func formatAuthor(user telebot.User) string {
-	if user.Username != "" {
-		return "@" + user.Username
-	}
-	return user.FirstName
 }

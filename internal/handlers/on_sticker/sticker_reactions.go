@@ -8,6 +8,7 @@ import (
 
 	"github.com/reijo1337/ToxicBot/internal/features/chathistory"
 	"github.com/reijo1337/ToxicBot/internal/features/chatsettings"
+	"github.com/reijo1337/ToxicBot/internal/features/message"
 	"github.com/reijo1337/ToxicBot/internal/features/stats"
 	"github.com/reijo1337/ToxicBot/pkg/pointer"
 	"gopkg.in/telebot.v3"
@@ -26,6 +27,7 @@ type StickerReactions struct {
 	settingsProvider     settingsProvider
 	history              historyBuffer
 	replier              botReplier
+	botAuthor            string
 	stickers             []string
 	stickersFromPacks    []string
 	muStk                sync.RWMutex
@@ -43,6 +45,7 @@ func New(
 	history historyBuffer,
 	replier botReplier,
 	updateStickersPeriod time.Duration,
+	botAuthor string,
 ) (*StickerReactions, error) {
 	out := StickerReactions{
 		ctx:                  ctx,
@@ -55,6 +58,7 @@ func New(
 		history:              history,
 		replier:              replier,
 		updateStickersPeriod: updateStickersPeriod,
+		botAuthor:            botAuthor,
 	}
 
 	if err := out.reloadStickers(); err != nil {
@@ -75,7 +79,7 @@ func (sr *StickerReactions) Handle(ctx telebot.Context) error {
 	sender := pointer.From(ctx.Sender())
 	msg := ctx.Message()
 
-	author := formatAuthor(sender)
+	author := message.SanitizeAuthor(sender.Username, sender.FirstName, sender.ID, sender.IsBot)
 	replyToID := 0
 	if msg.ReplyTo != nil {
 		replyToID = msg.ReplyTo.ID
@@ -122,18 +126,11 @@ func (sr *StickerReactions) Handle(ctx telebot.Context) error {
 	sr.history.Add(chat.ID, chathistory.Entry{
 		ID:        sent.ID,
 		Time:      time.Now(),
-		Author:    "бот",
+		Author:    sr.botAuthor,
 		Text:      "*прислал стикер*",
 		ReplyToID: msg.ID,
 		FromBot:   true,
 	})
 
 	return nil
-}
-
-func formatAuthor(user telebot.User) string {
-	if user.Username != "" {
-		return "@" + user.Username
-	}
-	return user.FirstName
 }
